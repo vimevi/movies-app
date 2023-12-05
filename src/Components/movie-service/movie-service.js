@@ -1,8 +1,8 @@
 export default class MovieService {
 	TOKEN = `eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhZTI2M2E0ZDQ3YmYxYmI3NzNhNTNlZmNmYmM3MGRjYyIsInN1YiI6IjY1NWEwNjU5ZWE4NGM3MTA5NTlmOWE1NyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.n7Qkzm63Q1_hH7F_eHmn_G8m30_-Vh0j8fAvtmtpX98`;
 	API_KEY = `ae263a4d47bf1bb773a53efcfbc70dcc`;
+	BASE_URL = 'https://api.themoviedb.org/3';
 	OPTIONS = {
-		method: 'GET',
 		headers: {
 			Authorization: `Bearer ${this.TOKEN}`,
 			'Content-Type': 'application/json',
@@ -10,71 +10,26 @@ export default class MovieService {
 	};
 
 	async fetchMovieData(value, page) {
-		const MOVIE_API_URL = `https://api.themoviedb.org/3/search/movie?query=${value}&page=${page}&language=ru&api_key=ae263a4d47bf1bb773a53efcfbc70dcc`;
-		try {
-			const response = await fetch(MOVIE_API_URL, this.OPTIONS);
-			if (!response.ok) {
-				console.error(`Could not fetch ${MOVIE_API_URL}`);
-				return null;
-			}
-			const movieData = await response.json();
-			return movieData;
-		} catch (error) {
-			console.error('Error:', error.message);
-			return null;
-		}
+		const MOVIE_API_URL = `${this.BASE_URL}/search/movie?query=${value}&page=${page}&language=ru&api_key=${this.API_KEY}`;
+		return this.fetchData(MOVIE_API_URL);
 	}
 
 	async getMovieGenres() {
-		const urlGenres =
-			'https://api.themoviedb.org/3/genre/movie/list?language=ru';
-		try {
-			const response = await fetch(urlGenres, this.OPTIONS);
-			const data = await response.json();
-			const exactList = data.genres;
-			const genresData = exactList.reduce((obj, item) => {
-				obj[item.id] = item.name;
-				return obj;
-			}, {});
-			return genresData;
-		} catch (e) {
-			console.log('error', e);
-			return null;
-		}
+		const urlGenres = `${this.BASE_URL}/genre/movie/list?language=ru`;
+		const data = await this.fetchData(urlGenres);
+		return data ? this.extractGenres(data.genres) : null;
 	}
-	async getRatedMovies(page) {
-		const localStorageGuestSessionId = localStorage.getItem('guestSessionId');
 
-		if (!localStorageGuestSessionId) {
+	async getRatedMovies(page) {
+		const guestSessionId = localStorage.getItem('guestSessionId');
+
+		if (!guestSessionId) {
 			console.error('Guest session ID not found in local storage');
 			return null;
 		}
 
-		const options = {
-			method: 'GET',
-			headers: {
-				accept: 'application/json',
-			},
-		};
-
-		try {
-			const res = await fetch(
-				`https://api.themoviedb.org/3/guest_session/${localStorageGuestSessionId}/rated/movies?api_key=${this.API_KEY}&language=ru-RU&page=${page}`,
-				options,
-			);
-
-			if (res.ok) {
-				const data = await res.json();
-				console.log('Rated movies data after fetching:', data);
-				return data;
-			} else {
-				console.error('Error fetching rated movies:', res.statusText);
-				return null;
-			}
-		} catch (error) {
-			console.error('Error fetching rated movies:', error);
-			return null;
-		}
+		const url = `${this.BASE_URL}/guest_session/${guestSessionId}/rated/movies?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
+		return this.fetchData(url, { headers: { accept: 'application/json' } });
 	}
 
 	async onAddRating(movieId, ratingValue, guestSessionId) {
@@ -92,25 +47,8 @@ export default class MovieService {
 			body: JSON.stringify({ value: ratingValue }),
 		};
 
-		try {
-			const response = await fetch(
-				`https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${this.API_KEY}&guest_session_id=${guestSessionId}`,
-				options,
-			);
-
-			const data = await response.json();
-
-			if (response.ok && data.success) {
-				console.log('Оценено:', data);
-				return data;
-			} else {
-				console.error('Error adding rating:', data.status_message);
-				return null;
-			}
-		} catch (error) {
-			console.error('Error adding rating:', error);
-			return null;
-		}
+		const url = `${this.BASE_URL}/movie/${movieId}/rating?api_key=${this.API_KEY}&guest_session_id=${guestSessionId}`;
+		return this.fetchData(url, options);
 	}
 
 	async requestGuestSessionId() {
@@ -120,33 +58,47 @@ export default class MovieService {
 			return storedGuestSessionId;
 		}
 
-		try {
-			const options = {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${this.TOKEN}`,
-				},
-			};
+		const options = {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${this.TOKEN}`,
+			},
+		};
 
-			const response = await fetch(
-				'https://api.themoviedb.org/3/authentication/guest_session/new',
-				options,
-			);
+		const url = `${this.BASE_URL}/authentication/guest_session/new`;
+		const data = await this.fetchData(url, options);
 
-			const data = await response.json();
-
-			if (response.ok && data.success) {
-				const guestSessionId = data.guest_session_id;
-				localStorage.setItem('guestSessionId', guestSessionId);
-				return guestSessionId;
-			} else {
-				console.error('Error:', data.status_message);
-				return null;
-			}
-		} catch (error) {
-			console.error('Error fetching guest session ID:', error);
+		if (data && data.success) {
+			const guestSessionId = data.guest_session_id;
+			localStorage.setItem('guestSessionId', guestSessionId);
+			return guestSessionId;
+		} else {
+			console.error('Error:', data ? data.status_message : 'Unknown error');
 			return null;
 		}
+	}
+
+	async fetchData(url, options = {}) {
+		try {
+			const response = await fetch(url, { ...this.OPTIONS, ...options });
+
+			if (!response.ok) {
+				console.error(`Could not fetch ${url}`);
+				return null;
+			}
+
+			return await response.json();
+		} catch (error) {
+			console.error('Error:', error.message);
+			return null;
+		}
+	}
+
+	extractGenres(genres) {
+		return genres.reduce((obj, item) => {
+			obj[item.id] = item.name;
+			return obj;
+		}, {});
 	}
 }

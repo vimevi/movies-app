@@ -16,7 +16,6 @@ export default class MovieList extends Component {
 			searchComlited,
 			value,
 			onAddRating,
-			// ratedMovies,
 		} = this.props;
 
 		if (loading) {

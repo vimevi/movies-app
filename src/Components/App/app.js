@@ -82,16 +82,9 @@ export default class App extends Component {
 
 	// Рейтинг и табы
 	handleTabChange = (tab) => {
-		this.setState(
-			(prevState) => ({
-				activeTab: tab === prevState.activeTab ? 'search' : tab,
-			}),
-			() => {
-				if (this.state.activeTab === 'rated') {
-					this.getRatedMovies();
-				}
-			},
-		);
+		this.setState((prevState) => ({
+			activeTab: tab === prevState.activeTab ? 'search' : tab,
+		}));
 	};
 
 	handleRatedPageChange = (page) => {
@@ -217,7 +210,6 @@ export default class App extends Component {
 			this.setState({ loading: false });
 		}
 	};
-
 	render() {
 		const {
 			loading,
@@ -276,7 +268,6 @@ export default class App extends Component {
 								/>
 							</>
 						)}
-
 						{activeTab === 'rated' && (
 							<RatedMovieList
 								loading={loading}

@@ -20,7 +20,7 @@ export default class RatedMovieList extends Component {
 
 		return (
 			<ul className="movies-list">
-				{ratedMovies && ratedMovies.results ? (
+				{ratedMovies && ratedMovies.results.length !== 0 ? (
 					ratedMovies.results.map((movie) => (
 						<MovieItem
 							onAddRating={onAddRating}
@@ -42,9 +42,14 @@ export default class RatedMovieList extends Component {
 	}
 }
 
+RatedMovieList.defaultProps = {
+	ratedMovies: {},
+	genresData: {},
+};
+
 RatedMovieList.propTypes = {
 	ratedMovies: PropTypes.object,
 	loading: PropTypes.bool.isRequired,
 	genresData: PropTypes.object,
-	onAddRating: PropTypes.func,
+	onAddRating: PropTypes.func.isRequired,
 };

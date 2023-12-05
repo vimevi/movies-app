@@ -31,7 +31,6 @@ export default class MovieItem extends Component {
 		const { movie, onAddRating } = this.props;
 		onAddRating(movie.id, value);
 		this.setState({ mark: value });
-		// console.log('info: ', movie.id, value);
 	};
 
 	render() {
