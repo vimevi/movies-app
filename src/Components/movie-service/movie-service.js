@@ -10,14 +10,22 @@ export default class MovieService {
 	};
 
 	async fetchMovieData(value, page) {
-		const MOVIE_API_URL = `${this.BASE_URL}/search/movie?query=${value}&page=${page}&language=ru&api_key=${this.API_KEY}`;
-		return this.fetchData(MOVIE_API_URL);
+		try {
+			const MOVIE_API_URL = `${this.BASE_URL}/search/movie?query=${value}&page=${page}&language=ru&api_key=${this.API_KEY}`;
+			return this.fetchData(MOVIE_API_URL);
+		} catch (e) {
+			console.error('error has beed detected', e);
+		}
 	}
 
 	async getMovieGenres() {
-		const urlGenres = `${this.BASE_URL}/genre/movie/list?language=ru`;
-		const data = await this.fetchData(urlGenres);
-		return data ? this.extractGenres(data.genres) : null;
+		try {
+			const urlGenres = `${this.BASE_URL}/genre/movie/list?language=ru`;
+			const data = await this.fetchData(urlGenres);
+			return data ? this.extractGenres(data.genres) : null;
+		} catch (e) {
+			console.error('error', e);
+		}
 	}
 
 	async getRatedMovies(page) {

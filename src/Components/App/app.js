@@ -61,10 +61,25 @@ export default class App extends Component {
 		}
 	};
 
+	// getMovieGenres = async () => {
+	// 	const genresData = await MovieService.getMovieGenres();
+	// 	if (genresData) {
+	// 		this.setState({ genresData });
+	// 	}
+	// };
+
 	getMovieGenres = async () => {
-		const genresData = await MovieService.getMovieGenres();
-		if (genresData) {
-			this.setState({ genresData });
+		try {
+			const genresData = await MovieService.getMovieGenres();
+			if (genresData) {
+				this.setState({ genresData, error: null });
+			}
+		} catch (error) {
+			console.error('Error fetching movie genres:', error);
+			this.setState({
+				genresData: null,
+				error: 'Failed to fetch movie genres',
+			});
 		}
 	};
 
@@ -233,6 +248,15 @@ export default class App extends Component {
 			activeTab === 'search'
 				? this.handlePageChange
 				: this.handleRatedPageChange;
+		if (!movieData && value !== '' && !loading && searchComlited) {
+			return (
+				<Alert
+					className="error"
+					message="Ошибка получения данных с API. Проверьте настройки VPN или прокси-сервера и перезагрузите страницу"
+					type="error"
+				></Alert>
+			);
+		}
 		return (
 			<div>
 				<Offline>
