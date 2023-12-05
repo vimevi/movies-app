@@ -1,0 +1,23 @@
+{
+	"env": {
+		"browser": true,
+		"node": true,
+		"es2021": true
+	},
+	"ignorePatterns": ["node_modules", "dist", "build"],
+	"parser": "@babel/eslint-parser",
+	"parserOptions": {
+		"requireConfigFile": false
+	},
+	"extends": ["eslint:recommended", "plugin:react/recommended", "prettier"],
+	"plugins": ["prettier"],
+	"rules": {
+		"prettier/prettier": ["error", {}],
+		"react/react-in-jsx-scope": "off",
+		"useTabs": 0,
+		"endOfLine": 0,
+		"indent": "off",
+		"linebreak-style": "off", 
+		"no-unescaped-entities": "off"
+	}
+}

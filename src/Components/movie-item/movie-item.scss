@@ -1,0 +1,86 @@
+.info-block {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+.rating-item {
+	margin-bottom: 16px;
+	margin-top: auto;
+}
+.movie-title {
+	width: 200px;
+}
+.movie-poster {
+	object-fit: cover;
+	height: 100%;
+	min-width: 200px;
+	max-width: 215px;
+	padding-right: 20px;
+	margin: auto 0;
+	border-radius: 10px;
+}
+
+.movie-title {
+	font-size: 20px;
+	margin: 12px 0 7px;
+}
+
+.genres {
+	margin: 0 0 10px 0;
+	display: flex;
+	gap: 8px;
+}
+
+.genres span {
+	border: 1px solid rgba(217, 217, 217, 1);
+	border-radius: 1px;
+	background-color: rgba(250, 250, 250, 1);
+	line-height: 14.52px;
+	padding: 3px 4px;
+}
+
+.movie-release {
+	color: rgba(130, 126, 126, 1);
+	margin: 7px 0 7px;
+}
+.movie-overview {
+	padding-right: 6px;
+	margin: 0;
+	line-height: 22px;
+	color: rgba(0, 0, 0, 1);
+}
+.vote_average {
+	padding: 8px 6px;
+	position: absolute;
+	right: 10px;
+	top: 10px;
+	border-radius: 50%;
+	border: 2px solid grey;
+	width: 34px;
+	height: 34px;
+	text-align: center;
+}
+.terrible {
+	border-color: #e90000;
+}
+.bad {
+	border-color: #e97e00;
+}
+.medium {
+	border-color: #e9d100;
+}
+.good {
+	border-color: #66e900;
+}
+
+@media screen and (max-width: 568px) {
+	.movie-poster {
+		height: 100px;
+		min-width: 10px;
+		border-radius: 0;
+		padding-top: 6px;
+		padding-left: 10px;
+	}
+}

@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter&family=Noto+Sans+Glagolitic&display=swap');
+
+*,
+*::after,
+*::before {
+	padding: 0;
+	box-sizing: border-box;
+	font-size: 12px;
+	font-family: 'Inter', sans-serif;
+}
+
+li {
+	list-style: none;
+}
+.container {
+	margin: 0 auto;
+	padding: 0 16px;
+	max-width: 1042px;
+}
+header {
+	margin: 15px 0 20px;
+}
+
+header div {
+	display: flex;
+	justify-content: center;
+}
+.active-tab {
+	border-bottom: 3px solid rgba(24, 144, 255, 1);
+}
+header span {
+	padding: 19px 10px 10px;
+	display: block;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.09);
+	cursor: pointer;
+	transition: all 0.2;
+	font-size: 14px;
+	transition: all 0.1s;
+}
+header span:hover {
+	border-bottom: 3px solid rgba(24, 144, 255, 0.2);
+}
+
+
+
+.what-find {
+	font-size: 14px;
+	padding-top: 10px;
+}
+
+.ant-pagination {
+	text-align: center;
+	padding-top: 30px;
+	margin-bottom: 15px;
+}
+.connection-troubles {
+	padding: 0 14px;
+	font-size: 14px;
+	text-align: center;
+}
+.ant-alert {
+	width: 100%;
+}
+
