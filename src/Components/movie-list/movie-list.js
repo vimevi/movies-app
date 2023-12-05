@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import './movie-list.scss';
 
 import MovieItem from '../movie-item/movie-item';
-import Spinner from '../spinner';
+import Spinner from '../Spinner';
 import { Alert } from 'antd';
 
 export default class MovieList extends Component {
