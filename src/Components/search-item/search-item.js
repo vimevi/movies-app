@@ -21,9 +21,10 @@ export default class SearcItem extends Component {
 		);
 	}
 }
-
+SearcItem.defaultProps = {
+	value: '',
+};
 SearcItem.propTypes = {
-	fetchMovieData: PropTypes.func.isRequired,
 	onInputChange: PropTypes.func.isRequired,
-	value: PropTypes.string.isRequired,
+	value: PropTypes.string,
 };

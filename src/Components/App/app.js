@@ -61,13 +61,6 @@ export default class App extends Component {
 		}
 	};
 
-	// getMovieGenres = async () => {
-	// 	const genresData = await MovieService.getMovieGenres();
-	// 	if (genresData) {
-	// 		this.setState({ genresData });
-	// 	}
-	// };
-
 	getMovieGenres = async () => {
 		try {
 			const genresData = await MovieService.getMovieGenres();
@@ -278,9 +271,6 @@ export default class App extends Component {
 									onInputChange={this.onInputChange}
 									value={value}
 								/>
-								{/* {!loading && searchComlited && movieData ? (
-									<Alert message={`Результаты по запросу: ${value}`}></Alert>
-								) : null} */}
 								<MovieList
 									loading={loading}
 									ratedMovies={ratedMoviesData}

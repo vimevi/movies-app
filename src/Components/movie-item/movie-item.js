@@ -102,6 +102,8 @@ export default class MovieItem extends Component {
 
 MovieItem.defaultValue = {
 	genresData: {},
+	rating: 0,
+	onAddRating: () => {},
 };
 
 MovieItem.propTypes = {

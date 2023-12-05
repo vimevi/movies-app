@@ -27,7 +27,10 @@ export default class Header extends Component {
 		);
 	}
 }
-
+Header.defaultProps = {
+	onTabChange: () => {},
+	activeTab: 'search',
+};
 Header.propTypes = {
 	onTabChange: PropTypes.func,
 	activeTab: PropTypes.string,
