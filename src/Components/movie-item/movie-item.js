@@ -93,6 +93,7 @@ export default class MovieItem extends Component {
 						defaultValue={rating ? rating : this.state.mark}
 						allowClear={false}
 						onChange={(value) => this.handleRating(value)}
+						style={{ color: '#F4A900' }}
 					/>
 				</div>
 			</li>
