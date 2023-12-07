@@ -7,13 +7,12 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/esm/locale';
 import { Rate } from 'antd';
 
-import noPosterImg from '../App/img/no_poster.png';
+import noPosterImg from '../../assets/images/no_poster.png';
 
 export default class MovieItem extends Component {
 	state = {
 		mark: 0,
 	};
-	// ids = 100;
 	textCut(text = 'Нет информации') {
 		const defaultText = 'В базе нет описания фильма';
 		const wordLimit = 25;
@@ -34,6 +33,8 @@ export default class MovieItem extends Component {
 	};
 
 	render() {
+		// let styleArray = ['vote_average'];
+
 		const { movie, genresData, rating } = this.props;
 		let voteColor = '';
 		voteColor +=

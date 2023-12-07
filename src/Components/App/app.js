@@ -1,16 +1,18 @@
-import { Component } from 'react';
+import React, { createContext, Component } from 'react';
 
 import { Pagination, Alert } from 'antd';
 import debounce from 'lodash.debounce';
 
-import { Offline, Online } from 'react-detect-offline';
+import { Offline } from 'react-detect-offline';
 import MovieList from '../movie-list/movie-list';
 import SearcItem from '../search-item';
-import MovieService from '../movie-service';
+import MovieService from '../../Movie-service/movie-service';
 import Header from '../header';
 import RatedMovieList from '../rated-movie-list';
 
 import './app.scss';
+
+const GenresDataContext = createContext();
 
 export default class App extends Component {
 	state = {
@@ -26,8 +28,6 @@ export default class App extends Component {
 		guestSessionId: null,
 		activeTab: 'search',
 	};
-	_token =
-		'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhZTI2M2E0ZDQ3YmYxYmI3NzNhNTNlZmNmYmM3MGRjYyIsInN1YiI6IjY1NWEwNjU5ZWE4NGM3MTA5NTlmOWE1NyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.n7Qkzm63Q1_hH7F_eHmn_G8m30_-Vh0j8fAvtmtpX98';
 
 	onInputChange = (e) => {
 		const value = e.target.value;
@@ -41,38 +41,27 @@ export default class App extends Component {
 
 	componentDidMount() {
 		this.getMovieGenres();
-		this.requestGuestSessionId();
+		this.getGuestSessionId();
 		this.getRatedMovies();
 	}
-
+	setGenres = (genres) => {
+		this.setState({ movieGenres: genres });
+	};
 	fetchMovieData = async (value, page = 1) => {
-		try {
-			this.setState({ loading: true });
-			const movieData = await MovieService.fetchMovieData(value, page);
+		this.setState({ loading: true });
+		const movieData = await MovieService.fetchMovieData(value, page);
 
-			this.setState({
-				movieData: movieData,
-				loading: false,
-				searchComlited: true,
-			});
-		} catch (error) {
-			console.error('Error fetching movie data:', error);
-			this.setState({ movieData: null, loading: false });
-		}
+		this.setState({
+			movieData: movieData,
+			loading: false,
+			searchComlited: true,
+		});
 	};
 
 	getMovieGenres = async () => {
-		try {
-			const genresData = await MovieService.getMovieGenres();
-			if (genresData) {
-				this.setState({ genresData, error: null });
-			}
-		} catch (error) {
-			console.error('Error fetching movie genres:', error);
-			this.setState({
-				genresData: null,
-				error: 'Failed to fetch movie genres',
-			});
+		const genresData = await MovieService.getMovieGenres();
+		if (genresData) {
+			this.setState({ genresData, error: null });
 		}
 	};
 
@@ -101,121 +90,43 @@ export default class App extends Component {
 		});
 	};
 
-	requestGuestSessionId = async () => {
-		const storedGuestSessionId = this.state.guestSessionId;
-
-		if (storedGuestSessionId) {
-			return storedGuestSessionId;
-		}
-
-		const localStorageGuestSessionId = localStorage.getItem('guestSessionId');
-
-		if (localStorageGuestSessionId) {
-			this.setState({ guestSessionId: localStorageGuestSessionId });
-			return localStorageGuestSessionId;
-		}
-
+	getGuestSessionId = async () => {
 		try {
-			const apiKey = this._token;
-
-			const options = {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${apiKey}`,
-				},
-			};
-
-			const response = await fetch(
-				'https://api.themoviedb.org/3/authentication/guest_session/new',
-				options,
-			);
-
-			const data = await response.json();
-
-			if (response.ok && data.success) {
-				const guestSessionId = data.guest_session_id;
-				this.setState({ guestSessionId });
-				localStorage.setItem('guestSessionId', guestSessionId);
-
-				return guestSessionId;
-			} else {
-				console.error('Error:', data.status_message);
-				return null;
+			const storedGuestSessionId = localStorage.getItem('guestSessionId');
+			if (storedGuestSessionId) {
+				return storedGuestSessionId;
 			}
-		} catch (error) {
-			console.error('Error fetching guest session ID:', error);
-			return null;
+
+			const fetchedGuestSessionId = await MovieService.requestGuestSessionId();
+			if (fetchedGuestSessionId) {
+				return fetchedGuestSessionId;
+			}
+		} catch (e) {
+			<Alert
+				message={`Ошибка получения ID гостевой сессии, ошибка: ${e}`}
+			></Alert>;
 		}
 	};
-
 	onAddRating = async (movieId, ratingValue) => {
-		const { guestSessionId } = this.state;
-		console.log(guestSessionId);
-		if (!guestSessionId) {
-			console.error('Guest session ID is not available');
-			return;
-		}
-
-		const options = {
-			method: 'POST',
-			headers: {
-				accept: 'application/json',
-				'Content-Type': 'application/json;charset=utf-8',
-			},
-			body: JSON.stringify({ value: ratingValue }),
-		};
+		const guestSessionId = await this.getGuestSessionId();
 
 		try {
-			const response = await fetch(
-				`https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=ae263a4d47bf1bb773a53efcfbc70dcc&guest_session_id=${guestSessionId}`,
-				options,
+			await MovieService.onAddRating(movieId, ratingValue, guestSessionId);
+			console.log('Оценено:', this.state.ratedMoviesData);
+			await this.getRatedMovies();
+		} catch (e) {
+			return (
+				<Alert message={`Ошибка получения данных с API, ошибка: ${e}`}></Alert>
 			);
-
-			const data = await response.json();
-
-			if (response.ok && data.success) {
-				console.log('Оценено:', this.state.ratedMoviesData);
-			} else {
-				console.error('Error adding rating:', data.status_message);
-			}
-		} catch (error) {
-			console.error('Error adding rating:', error);
 		}
 	};
-
-	getRatedMovies = async (page = 1) => {
+	getRatedMovies = async (page) => {
 		try {
-			this.setState({ loading: true });
-			const localStorageGuestSessionId = localStorage.getItem('guestSessionId');
-
-			if (!localStorageGuestSessionId) {
-				console.error('Guest session ID not found in local storage');
-				return;
-			}
-			const options = {
-				method: 'GET',
-				headers: {
-					accept: 'application/json',
-				},
-			};
-
-			const res = await fetch(
-				`https://api.themoviedb.org/3/guest_session/${localStorageGuestSessionId}/rated/movies?api_key=ae263a4d47bf1bb773a53efcfbc70dcc&language=ru-RU&page=${page}`,
-				options,
-			);
-
-			if (res.ok) {
-				const data = await res.json();
-				console.log('Rated movies data after fetching:', data);
-				this.setState({ ratedMoviesData: data });
-			} else {
-				console.error('Error fetching rated movies:', res.statusText);
-			}
+			const data = await MovieService.getRatedMovies(page);
+			this.setState({ ratedMoviesData: data });
+			console.log('Rated movies data:', data);
 		} catch (error) {
-			console.error('Error fetching rated movies:', error);
-		} finally {
-			this.setState({ loading: false });
+			return <Alert message="Ошибка получения данных с API"></Alert>;
 		}
 	};
 	render() {
@@ -229,6 +140,7 @@ export default class App extends Component {
 			ratedMoviesData,
 			activeTab,
 		} = this.state;
+		const GenresDataProvider = GenresDataContext.Provider;
 		const totalPages =
 			activeTab === 'search'
 				? movieData
@@ -260,8 +172,8 @@ export default class App extends Component {
 						></Alert>
 					</div>
 				</Offline>
-				<Online>
-					<div className="container">
+				<div className="container">
+					<GenresDataProvider value={genresData}>
 						<Header onTabChange={this.handleTabChange} activeTab={activeTab} />
 
 						{activeTab === 'search' && (
@@ -271,26 +183,34 @@ export default class App extends Component {
 									onInputChange={this.onInputChange}
 									value={value}
 								/>
-								<MovieList
-									loading={loading}
-									ratedMovies={ratedMoviesData}
-									movieData={movieData}
-									genresData={genresData}
-									searchComlited={searchComlited}
-									value={value}
-									onAddRating={this.onAddRating}
-								/>
+								<GenresDataContext.Consumer>
+									{(contextValue) => (
+										<MovieList
+											loading={loading}
+											ratedMovies={ratedMoviesData}
+											movieData={movieData}
+											genresData={contextValue}
+											searchComlited={searchComlited}
+											value={value}
+											onAddRating={this.onAddRating}
+										/>
+									)}
+								</GenresDataContext.Consumer>
 							</>
 						)}
 						{activeTab === 'rated' && (
-							<RatedMovieList
-								loading={loading}
-								ratedMovies={ratedMoviesData}
-								onAddRating={this.onAddRating}
-								genresData={genresData}
-								currentPage={currentPage}
-								onPageChange={this.handleRatedPageChange}
-							/>
+							<GenresDataContext.Consumer>
+								{(contextValue) => (
+									<RatedMovieList
+										loading={loading}
+										ratedMovies={ratedMoviesData}
+										onAddRating={this.onAddRating}
+										genresData={contextValue}
+										currentPage={currentPage}
+										onPageChange={this.handleRatedPageChange}
+									/>
+								)}
+							</GenresDataContext.Consumer>
 						)}
 						<Pagination
 							current={
@@ -301,12 +221,11 @@ export default class App extends Component {
 							total={totalPages}
 							pageSize={20}
 							onChange={onPageChange}
-							// showQuickJumper={true}
 							showLessItems={false}
 							showSizeChanger={false}
 						/>
-					</div>
-				</Online>
+					</GenresDataProvider>
+				</div>
 			</div>
 		);
 	}
