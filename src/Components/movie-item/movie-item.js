@@ -33,8 +33,6 @@ export default class MovieItem extends Component {
 	};
 
 	render() {
-		// let styleArray = ['vote_average'];
-
 		const { movie, genresData, rating } = this.props;
 		let voteColor = '';
 		voteColor +=

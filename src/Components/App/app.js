@@ -1,12 +1,12 @@
-import React, { createContext, Component } from 'react';
+import { createContext, Component } from 'react';
 
+import movieService from '../../Services/movie-service';
 import { Pagination, Alert } from 'antd';
 import debounce from 'lodash.debounce';
 
 import { Offline } from 'react-detect-offline';
 import MovieList from '../movie-list/movie-list';
 import SearcItem from '../search-item';
-import MovieService from '../../Movie-service/movie-service';
 import Header from '../header';
 import RatedMovieList from '../rated-movie-list';
 
@@ -29,6 +29,20 @@ export default class App extends Component {
 		activeTab: 'search',
 	};
 
+	fetchMovieData = async (value, page = 1) => {
+		try {
+			this.setState({ loading: true });
+			const movieData = await movieService.fetchMovieData(value, page);
+			this.setState({
+				movieData: movieData,
+				loading: false,
+				searchComlited: true,
+			});
+		} catch (e) {
+			return <Alert message={`Что-то пошло не так. Ошибка: ${e}`}></Alert>;
+		}
+	};
+
 	onInputChange = (e) => {
 		const value = e.target.value;
 		this.setState({ value });
@@ -47,21 +61,17 @@ export default class App extends Component {
 	setGenres = (genres) => {
 		this.setState({ movieGenres: genres });
 	};
-	fetchMovieData = async (value, page = 1) => {
-		this.setState({ loading: true });
-		const movieData = await MovieService.fetchMovieData(value, page);
-
-		this.setState({
-			movieData: movieData,
-			loading: false,
-			searchComlited: true,
-		});
-	};
 
 	getMovieGenres = async () => {
-		const genresData = await MovieService.getMovieGenres();
-		if (genresData) {
-			this.setState({ genresData, error: null });
+		try {
+			const genresData = await movieService.getMovieGenres();
+			if (genresData) {
+				this.setState({ genresData, error: null });
+			}
+		} catch (e) {
+			return (
+				<Alert message={`Ошибка получения списка жанров, ошибка: ${e}`}></Alert>
+			);
 		}
 	};
 
@@ -78,18 +88,30 @@ export default class App extends Component {
 	};
 
 	// Рейтинг и табы
-	handleTabChange = (tab) => {
-		this.setState((prevState) => ({
-			activeTab: tab === prevState.activeTab ? 'search' : tab,
-		}));
-	};
 
-	handleRatedPageChange = (page) => {
-		this.setState({ ratedMoviesCurrentPage: page, loading: true }, () => {
-			this.getRatedMovies(page);
+	handleTabChange = (tab) => {
+		this.setState({ loading: true }, () => {
+			this.getRatedMovies().then(() => {
+				this.setState((prevState) => ({
+					activeTab: tab === prevState.activeTab ? 'search' : tab,
+					loading: false,
+				}));
+			});
 		});
 	};
-
+	handleRatedPageChange = async (page) => {
+		this.setState({ ratedMoviesCurrentPage: page, loading: true }, async () => {
+			try {
+				const data = await movieService.getRatedMovies(page);
+				this.setState({ ratedMoviesData: data, loading: false });
+			} catch (error) {
+				this.setState({ loading: false });
+				return (
+					<Alert message={`Страницы не найдено. Ошибка: ${error}`}></Alert>
+				);
+			}
+		});
+	};
 	getGuestSessionId = async () => {
 		try {
 			const storedGuestSessionId = localStorage.getItem('guestSessionId');
@@ -97,7 +119,7 @@ export default class App extends Component {
 				return storedGuestSessionId;
 			}
 
-			const fetchedGuestSessionId = await MovieService.requestGuestSessionId();
+			const fetchedGuestSessionId = await movieService.requestGuestSessionId();
 			if (fetchedGuestSessionId) {
 				return fetchedGuestSessionId;
 			}
@@ -111,7 +133,7 @@ export default class App extends Component {
 		const guestSessionId = await this.getGuestSessionId();
 
 		try {
-			await MovieService.onAddRating(movieId, ratingValue, guestSessionId);
+			await movieService.onAddRating(movieId, ratingValue, guestSessionId);
 			console.log('Оценено:', this.state.ratedMoviesData);
 			await this.getRatedMovies();
 		} catch (e) {
@@ -122,9 +144,8 @@ export default class App extends Component {
 	};
 	getRatedMovies = async (page) => {
 		try {
-			const data = await MovieService.getRatedMovies(page);
+			const data = await movieService.getRatedMovies(page);
 			this.setState({ ratedMoviesData: data });
-			console.log('Rated movies data:', data);
 		} catch (error) {
 			return <Alert message="Ошибка получения данных с API"></Alert>;
 		}

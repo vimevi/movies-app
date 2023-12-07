@@ -1,4 +1,4 @@
-export default class MovieService {
+class movieService {
 	TOKEN = `eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhZTI2M2E0ZDQ3YmYxYmI3NzNhNTNlZmNmYmM3MGRjYyIsInN1YiI6IjY1NWEwNjU5ZWE4NGM3MTA5NTlmOWE1NyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.n7Qkzm63Q1_hH7F_eHmn_G8m30_-Vh0j8fAvtmtpX98`;
 	API_KEY = `ae263a4d47bf1bb773a53efcfbc70dcc`;
 	BASE_URL = 'https://api.themoviedb.org/3';
@@ -10,33 +10,22 @@ export default class MovieService {
 	};
 
 	async getMovieGenres() {
-		try {
-			const url = new URL(`${this.BASE_URL}/genre/movie/list`);
-			url.searchParams.set('language', 'ru');
-			const data = await this.fetchData(url);
-			return data ? this.extractGenres(data.genres) : null;
-		} catch (e) {
-			console.error('error', e);
-		}
+		const url = new URL(`${this.BASE_URL}/genre/movie/list`);
+		url.searchParams.set('language', 'ru');
+		const data = await this.fetchData(url);
+		return data ? this.extractGenres(data.genres) : null;
 	}
 
 	async getRatedMovies(page = 1) {
 		const localStorageGuestSessionId = localStorage.getItem('guestSessionId');
 
-		if (!localStorageGuestSessionId) {
-			console.error('Guest session ID not found in local storage');
-			return null;
-		}
-
 		const url = new URL(
 			`https://api.themoviedb.org/3/guest_session/${localStorageGuestSessionId}/rated/movies`,
 		);
-		const params = new URLSearchParams({
-			api_key: 'ae263a4d47bf1bb773a53efcfbc70dcc',
-			language: 'ru-RU',
-			page: page,
-		});
-		url.search = params.toString();
+
+		url.searchParams.set('api_key', this.API_KEY);
+		url.searchParams.set('language', 'ru-RU');
+		url.searchParams.set('page', page);
 
 		const options = {
 			method: 'GET',
@@ -96,12 +85,6 @@ export default class MovieService {
 
 	async fetchData(url, options = {}) {
 		const response = await fetch(url, { ...this.OPTIONS, ...options });
-
-		if (!response.ok) {
-			console.error(`Could not fetch ${url}`);
-			return null;
-		}
-
 		return await response.json();
 	}
 
@@ -112,3 +95,5 @@ export default class MovieService {
 		}, {});
 	}
 }
+
+export default new movieService();
