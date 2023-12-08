@@ -27,20 +27,28 @@ export default class App extends Component {
 		ratedMoviesCurrentPage: 1,
 		guestSessionId: null,
 		activeTab: 'search',
+		error: false,
+		errorMessage: '',
+	};
+
+	onError = (error) => {
+		this.setState({
+			error: true,
+			loading: false,
+			errorMessage: `Что-то пошло не так. Ошибка: ${error}`,
+		});
 	};
 
 	fetchMovieData = async (value, page = 1) => {
-		try {
-			this.setState({ loading: true });
-			const movieData = await movieService.fetchMovieData(value, page);
-			this.setState({
-				movieData: movieData,
-				loading: false,
-				searchComlited: true,
-			});
-		} catch (e) {
-			return <Alert message={`Что-то пошло не так. Ошибка: ${e}`}></Alert>;
-		}
+		this.setState({ loading: true });
+		const movieData = await movieService
+			.fetchMovieData(value, page)
+			.catch((error) => this.onError(error.message));
+		this.setState({
+			movieData: movieData,
+			loading: false,
+			searchComlited: true,
+		});
 	};
 
 	onInputChange = (e) => {
@@ -53,25 +61,21 @@ export default class App extends Component {
 		this.fetchMovieData(this.state.value, this.state.currentPage);
 	};
 
-	componentDidMount() {
-		this.getMovieGenres();
-		this.getGuestSessionId();
-		this.getRatedMovies();
+	async componentDidMount() {
+		await this.getMovieGenres();
+		await this.getGuestSessionId();
+		await this.getRatedMovies();
 	}
 	setGenres = (genres) => {
 		this.setState({ movieGenres: genres });
 	};
 
 	getMovieGenres = async () => {
-		try {
-			const genresData = await movieService.getMovieGenres();
-			if (genresData) {
-				this.setState({ genresData, error: null });
-			}
-		} catch (e) {
-			return (
-				<Alert message={`Ошибка получения списка жанров, ошибка: ${e}`}></Alert>
-			);
+		const genresData = await movieService
+			.getMovieGenres()
+			.catch((e) => this.onError(e));
+		if (genresData) {
+			this.setState({ genresData, error: null });
 		}
 	};
 
@@ -99,6 +103,7 @@ export default class App extends Component {
 			});
 		});
 	};
+
 	handleRatedPageChange = async (page) => {
 		this.setState({ ratedMoviesCurrentPage: page, loading: true }, async () => {
 			try {
@@ -113,42 +118,30 @@ export default class App extends Component {
 		});
 	};
 	getGuestSessionId = async () => {
-		try {
-			const storedGuestSessionId = localStorage.getItem('guestSessionId');
-			if (storedGuestSessionId) {
-				return storedGuestSessionId;
-			}
+		const storedGuestSessionId = localStorage.getItem('guestSessionId');
+		if (storedGuestSessionId) {
+			return storedGuestSessionId;
+		}
 
-			const fetchedGuestSessionId = await movieService.requestGuestSessionId();
-			if (fetchedGuestSessionId) {
-				return fetchedGuestSessionId;
-			}
-		} catch (e) {
-			<Alert
-				message={`Ошибка получения ID гостевой сессии, ошибка: ${e}`}
-			></Alert>;
+		const fetchedGuestSessionId = await movieService
+			.requestGuestSessionId()
+			.catch((e) => this.onError(e));
+		if (fetchedGuestSessionId) {
+			return fetchedGuestSessionId;
 		}
 	};
 	onAddRating = async (movieId, ratingValue) => {
 		const guestSessionId = await this.getGuestSessionId();
 
-		try {
-			await movieService.onAddRating(movieId, ratingValue, guestSessionId);
-			console.log('Оценено:', this.state.ratedMoviesData);
-			await this.getRatedMovies();
-		} catch (e) {
-			return (
-				<Alert message={`Ошибка получения данных с API, ошибка: ${e}`}></Alert>
-			);
-		}
+		await movieService.onAddRating(movieId, ratingValue, guestSessionId);
+		await this.getRatedMovies().catch((e) => this.onError(e));
 	};
+
 	getRatedMovies = async (page) => {
-		try {
-			const data = await movieService.getRatedMovies(page);
-			this.setState({ ratedMoviesData: data });
-		} catch (error) {
-			return <Alert message="Ошибка получения данных с API"></Alert>;
-		}
+		const data = await movieService
+			.getRatedMovies(page)
+			.catch((e) => this.onError(e));
+		this.setState({ ratedMoviesData: data });
 	};
 	render() {
 		const {
@@ -160,6 +153,8 @@ export default class App extends Component {
 			value,
 			ratedMoviesData,
 			activeTab,
+			error,
+			errorMessage,
 		} = this.state;
 		const GenresDataProvider = GenresDataContext.Provider;
 		const totalPages =
@@ -174,15 +169,11 @@ export default class App extends Component {
 			activeTab === 'search'
 				? this.handlePageChange
 				: this.handleRatedPageChange;
-		if (!movieData && value !== '' && !loading && searchComlited) {
-			return (
-				<Alert
-					className="error"
-					message="Ошибка получения данных с API. Проверьте настройки VPN или прокси-сервера и перезагрузите страницу"
-					type="error"
-				></Alert>
-			);
+
+		if (error && !loading) {
+			return <Alert type="error" message={errorMessage}></Alert>;
 		}
+
 		return (
 			<div>
 				<Offline>

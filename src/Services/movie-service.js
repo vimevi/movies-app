@@ -33,24 +33,43 @@ class movieService {
 				accept: 'application/json',
 			},
 		};
-		const response = await fetch(url.toString(), options);
 
-		const data = await response.json();
-		return data;
+		try {
+			const response = await fetch(url.toString(), options);
+
+			if (!response.ok) {
+				throw new Error(`${response.status}: ${response.statusText}`);
+			}
+
+			const data = await response.json();
+			return data;
+		} catch (error) {
+			throw new Error(
+				`Ошибка при получении оцененных фильмов: ${error.message}`,
+			);
+		}
 	}
 
 	async fetchMovieData(value, page) {
+		const url = new URL(`${this.BASE_URL}/search/movie`);
+		url.searchParams.set('query', value);
+		url.searchParams.set('page', page);
+		url.searchParams.set('language', 'ru');
+		url.searchParams.set('api_key', this.API_KEY);
+
 		try {
-			const url = new URL(`${this.BASE_URL}/search/movie`);
-			url.searchParams.set('query', value);
-			url.searchParams.set('page', page);
-			url.searchParams.set('language', 'ru');
-			url.searchParams.set('api_key', this.API_KEY);
-			return this.fetchData(url);
-		} catch (e) {
-			console.error('error has beed detected', e);
+			const response = await fetch(url, this.OPTIONS);
+			if (!response.ok) {
+				throw new Error(`${response.status}: ${response.statusText}`);
+			}
+
+			const data = await response.json();
+			return data;
+		} catch (error) {
+			throw new Error(`Ошибка при выполнении запроса: ${error.message}`);
 		}
 	}
+
 	async onAddRating(movieId, ratingValue, guestSessionId) {
 		const options = {
 			method: 'POST',
@@ -64,7 +83,17 @@ class movieService {
 		url.searchParams.set('api_key', this.API_KEY);
 		url.searchParams.set('guest_session_id', guestSessionId);
 
-		return this.fetchData(url, options);
+		try {
+			const response = await fetch(url, { ...this.OPTIONS, ...options });
+			if (!response.ok) {
+				throw new Error(`${response.status}: ${response.statusText}`);
+			}
+
+			const data = await response.json();
+			return data;
+		} catch (error) {
+			throw new Error(`Ошибка при выполнении запроса: ${error.message}`);
+		}
 	}
 
 	async requestGuestSessionId() {
@@ -84,8 +113,18 @@ class movieService {
 	}
 
 	async fetchData(url, options = {}) {
-		const response = await fetch(url, { ...this.OPTIONS, ...options });
-		return await response.json();
+		try {
+			const response = await fetch(url, { ...this.OPTIONS, ...options });
+
+			if (!response.ok) {
+				throw new Error(`${response.status}: ${response.statusText}`);
+			}
+
+			const data = await response.json();
+			return data;
+		} catch (error) {
+			throw new Error(`Ошибка при выполнении запроса: ${error.message}`);
+		}
 	}
 
 	extractGenres(genres) {
