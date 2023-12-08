@@ -1,6 +1,6 @@
 import { createContext, Component } from 'react';
 
-import movieService from '../../Services/movie-service';
+import movieService from '../../Services';
 import { Pagination, Alert } from 'antd';
 import debounce from 'lodash.debounce';
 
